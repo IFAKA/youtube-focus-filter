@@ -1,0 +1,334 @@
+/* YouTube Focus Filter - Content Script Styles */
+
+/* ============================================
+   CONNECTION STATUS BANNER
+   ============================================ */
+.ytff-banner {
+  position: fixed;
+  top: 56px; /* Below YouTube header */
+  left: 0;
+  right: 0;
+  z-index: 9999;
+  padding: 12px 20px;
+  font-family: 'YouTube Sans', 'Roboto', sans-serif;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  animation: ytff-slide-down 0.3s ease-out;
+}
+
+@keyframes ytff-slide-down {
+  from {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.ytff-banner--error {
+  background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+  border-bottom: 2px solid #ef4444;
+  color: #991b1b;
+}
+
+.ytff-banner--warning {
+  background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+  border-bottom: 2px solid #f59e0b;
+  color: #92400e;
+}
+
+.ytff-banner--success {
+  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+  border-bottom: 2px solid #22c55e;
+  color: #166534;
+}
+
+.ytff-banner__icon {
+  font-size: 18px;
+}
+
+.ytff-banner__message {
+  flex: 1;
+}
+
+.ytff-banner__action {
+  background: rgba(0, 0, 0, 0.1);
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.ytff-banner__action:hover {
+  background: rgba(0, 0, 0, 0.15);
+}
+
+.ytff-banner__close {
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  opacity: 0.6;
+  transition: opacity 0.2s;
+  padding: 4px;
+}
+
+.ytff-banner__close:hover {
+  opacity: 1;
+}
+
+/* ============================================
+   VIDEO CARD STATES
+   ============================================ */
+
+/* Pre-hide: Videos hidden by default until evaluated */
+[data-ytff-status="pending"] {
+  opacity: 0 !important;
+  pointer-events: none;
+  transition: opacity 0.3s ease-out;
+}
+
+/* Loading state with skeleton shimmer */
+[data-ytff-status="evaluating"] {
+  position: relative;
+  overflow: hidden;
+}
+
+[data-ytff-status="evaluating"]::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.4) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  animation: ytff-shimmer 1.5s infinite;
+  z-index: 10;
+  pointer-events: none;
+}
+
+[data-ytff-status="evaluating"]::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(139, 92, 246, 0.08);
+  backdrop-filter: blur(2px);
+  z-index: 9;
+  pointer-events: none;
+}
+
+@keyframes ytff-shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* Allowed - smooth reveal */
+[data-ytff-status="allowed"] {
+  opacity: 1 !important;
+  pointer-events: auto;
+  animation: ytff-reveal 0.4s ease-out;
+}
+
+@keyframes ytff-reveal {
+  from {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Blocked - completely hidden */
+[data-ytff-status="blocked"] {
+  display: none !important;
+}
+
+/* Error state - show with warning indicator */
+[data-ytff-status="error"] {
+  opacity: 1 !important;
+  pointer-events: auto;
+  position: relative;
+}
+
+[data-ytff-status="error"]::after {
+  content: '!';
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 20px;
+  height: 20px;
+  background: #f59e0b;
+  color: white;
+  border-radius: 50%;
+  font-size: 12px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+/* ============================================
+   LOADING BADGE ON THUMBNAIL
+   ============================================ */
+.ytff-loading-badge {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  background: rgba(139, 92, 246, 0.9);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  z-index: 100;
+  backdrop-filter: blur(4px);
+}
+
+.ytff-loading-badge__spinner {
+  width: 12px;
+  height: 12px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: ytff-spin 0.8s linear infinite;
+}
+
+@keyframes ytff-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ============================================
+   FILTER STATS BADGE (optional, shown on page)
+   ============================================ */
+.ytff-stats-badge {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-family: 'YouTube Sans', 'Roboto', sans-serif;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  z-index: 9999;
+  backdrop-filter: blur(8px);
+  animation: ytff-fade-in 0.3s ease-out;
+}
+
+@keyframes ytff-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.ytff-stats-badge__item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ytff-stats-badge__icon {
+  font-size: 14px;
+}
+
+.ytff-stats-badge__count {
+  font-weight: 600;
+  color: #a78bfa;
+}
+
+/* ============================================
+   DISABLED STATE (extension off)
+   ============================================ */
+.ytff-disabled-indicator {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: rgba(100, 100, 100, 0.8);
+  color: white;
+  padding: 8px 14px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-family: 'YouTube Sans', 'Roboto', sans-serif;
+  z-index: 9999;
+  backdrop-filter: blur(8px);
+}
+
+/* ============================================
+   SHORTS SPECIFIC STYLES
+   ============================================ */
+ytd-reel-item-renderer[data-ytff-status="evaluating"],
+ytd-shorts[data-ytff-status="evaluating"] {
+  filter: blur(8px);
+  transition: filter 0.3s ease-out;
+}
+
+ytd-reel-item-renderer[data-ytff-status="allowed"],
+ytd-shorts[data-ytff-status="allowed"] {
+  filter: none;
+  transition: filter 0.3s ease-out;
+}
+
+/* ============================================
+   DARK MODE SUPPORT
+   ============================================ */
+html[dark] .ytff-banner--error {
+  background: linear-gradient(135deg, #450a0a 0%, #7f1d1d 100%);
+  border-bottom-color: #dc2626;
+  color: #fecaca;
+}
+
+html[dark] .ytff-banner--warning {
+  background: linear-gradient(135deg, #451a03 0%, #78350f 100%);
+  border-bottom-color: #d97706;
+  color: #fde68a;
+}
+
+html[dark] .ytff-banner--success {
+  background: linear-gradient(135deg, #052e16 0%, #166534 100%);
+  border-bottom-color: #16a34a;
+  color: #bbf7d0;
+}
+
+html[dark] .ytff-banner__action {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+html[dark] .ytff-banner__action:hover {
+  background: rgba(255, 255, 255, 0.2);
+}

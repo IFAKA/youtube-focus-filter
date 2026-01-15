@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>YouTube Focus Filter</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>YouTube Focus Filter</h1>
+      <div class="toggle-container">
+        <label class="toggle">
+          <input type="checkbox" id="enableToggle">
+          <span class="slider"></span>
+        </label>
+        <span id="statusText">Enabled</span>
+      </div>
+    </header>
+
+    <div id="connectionStatus" class="status">
+      <span class="status-dot"></span>
+      <span class="status-text">Checking Ollama...</span>
+    </div>
+
+    <section class="section">
+      <h2>Your Goals</h2>
+      <textarea id="goalsInput" placeholder="Be specific about what you're learning/doing AND what distracts you.&#10;&#10;Example: Learning TypeScript, React, system design. Working on a SaaS startup. Block: gaming, celebrity drama, political rants, mukbangs, prank videos, reaction content."></textarea>
+      <button id="saveGoals" class="btn primary">Save Goals</button>
+    </section>
+
+    <section class="section">
+      <h2>Quick Presets</h2>
+      <div class="presets">
+        <button class="preset-btn" data-preset="learning">Learning</button>
+        <button class="preset-btn" data-preset="coding">Coding</button>
+        <button class="preset-btn" data-preset="fitness">Fitness</button>
+        <button class="preset-btn" data-preset="music">Music</button>
+      </div>
+    </section>
+
+    <section class="section stats">
+      <h2>Today's Stats</h2>
+      <div class="stats-grid">
+        <div class="stat">
+          <span class="stat-value" id="todayBlocked">0</span>
+          <span class="stat-label">Blocked</span>
+        </div>
+        <div class="stat">
+          <span class="stat-value" id="todayTotal">0</span>
+          <span class="stat-label">Evaluated</span>
+        </div>
+        <div class="stat">
+          <span class="stat-value" id="totalCached">0</span>
+          <span class="stat-label">Cached</span>
+        </div>
+      </div>
+      <button id="clearCache" class="btn" style="margin-top: 12px; width: 100%;">Clear Cache &amp; Re-evaluate</button>
+    </section>
+
+    <details class="section">
+      <summary>Advanced Settings</summary>
+      <div class="advanced-content">
+        <div class="field">
+          <label for="ollamaUrl">Ollama URL</label>
+          <input type="text" id="ollamaUrl" placeholder="http://localhost:11434">
+        </div>
+        <div class="field">
+          <label for="ollamaModel">Model</label>
+          <input type="text" id="ollamaModel" placeholder="llama3.2:3b">
+        </div>
+        <div class="field">
+          <label for="whitelistedChannels">Whitelisted Channels (one per line)</label>
+          <textarea id="whitelistedChannels" rows="3" placeholder="Channel names to always show..."></textarea>
+        </div>
+        <div class="field">
+          <label for="blacklistedChannels">Blacklisted Channels (one per line)</label>
+          <textarea id="blacklistedChannels" rows="3" placeholder="Channel names to always hide..."></textarea>
+        </div>
+        <button id="saveAdvanced" class="btn">Save Advanced Settings</button>
+      </div>
+    </details>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
