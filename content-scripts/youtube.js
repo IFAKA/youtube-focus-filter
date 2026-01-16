@@ -48,8 +48,16 @@
         el.querySelector('.ytff-loading-badge')?.remove();
       });
 
-      // Re-process
-      processVideos();
+      // Re-check connection and settings before re-processing
+      (async () => {
+        await loadSettings();
+        await checkConnection();
+        if (isEnabled && isConnected) {
+          processVideos();
+        } else {
+          console.log('[YouTube Focus Filter] Cannot re-process: enabled=' + isEnabled + ', connected=' + isConnected);
+        }
+      })();
       sendResponse({ success: true });
     }
     return true;
@@ -112,11 +120,18 @@
         removeBanner();
         processVideos();
       } else if (!isConnected && wasConnected) {
-        // Just disconnected - show error
-        showBanner('error', 'Ollama disconnected. Run: ollama serve', 'Retry', checkConnection);
+        // Just disconnected - show error with specific reason
+        const errorMsg = response.error || 'Ollama disconnected';
+        showBanner('error', errorMsg + '. Check extension settings.', 'Retry', checkConnection);
       } else if (!isConnected && !wasConnected) {
-        // Still disconnected on init
-        showBanner('error', 'Ollama not running. Start with: ollama serve', 'Retry', checkConnection);
+        // Still disconnected on init - show specific error
+        let errorMsg = 'Ollama not running. Start with: ollama serve';
+        if (response.error && response.error.includes('not found')) {
+          errorMsg = response.error + '. Pull it with: ollama pull <model>';
+        } else if (response.error) {
+          errorMsg = response.error;
+        }
+        showBanner('error', errorMsg, 'Retry', checkConnection);
       }
 
       return isConnected;

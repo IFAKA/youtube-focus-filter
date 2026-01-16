@@ -41,7 +41,16 @@ async function checkConnection() {
 
     if (response.healthy) {
       statusEl.className = 'status connected';
-      textEl.textContent = 'Ollama connected';
+      textEl.textContent = `Connected (${response.model})`;
+    } else if (response.error) {
+      statusEl.className = 'status disconnected';
+      if (response.availableModels && response.availableModels.length > 0) {
+        textEl.textContent = `${response.error}. Try: ${response.availableModels[0]}`;
+      } else if (response.error.includes('not found')) {
+        textEl.textContent = `${response.error}. Run: ollama pull ${document.getElementById('ollamaModel').value}`;
+      } else {
+        textEl.textContent = response.error + ' - run: ollama serve';
+      }
     } else {
       statusEl.className = 'status disconnected';
       textEl.textContent = 'Ollama not running - start with: ollama serve';

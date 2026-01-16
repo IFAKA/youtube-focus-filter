@@ -1,5 +1,5 @@
 import { OllamaClient } from './lib/ollama.js';
-import { getCachedDecision, setCachedDecision, clearExpiredCache, getStats } from './lib/cache.js';
+import { getCachedDecision, setCachedDecision, clearExpiredCache, getStats, clearAllCache } from './lib/cache.js';
 
 // Default settings
 const DEFAULT_SETTINGS = {
@@ -59,8 +59,8 @@ async function handleMessage(message) {
       return { success: true };
 
     case 'CHECK_HEALTH':
-      const healthy = await ollamaClient.checkHealth();
-      return { healthy };
+      const healthResult = await ollamaClient.checkHealth();
+      return healthResult;
 
     case 'GET_STATS':
       const stats = await getStats();
@@ -72,7 +72,6 @@ async function handleMessage(message) {
 
     case 'GOALS_CHANGED':
       // Clear all cache since goals changed
-      const { clearAllCache } = await import('./lib/cache.js');
       await clearAllCache();
 
       // Notify all YouTube tabs to re-process
