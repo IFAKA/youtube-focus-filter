@@ -8,79 +8,196 @@
 </head>
 <body>
   <div class="container">
-    <header>
-      <h1>YouTube Focus Filter</h1>
-      <div class="toggle-container">
-        <label class="toggle">
-          <input type="checkbox" id="enableToggle">
-          <span class="slider"></span>
-        </label>
-        <span id="statusText">Enabled</span>
+    <main class="tab-panels">
+      <!-- HOME TAB -->
+      <div class="tab-content active" data-tab="home">
+        <div class="home-header">
+          <h1>Focus Filter</h1>
+          <div class="master-toggle">
+            <label class="toggle toggle--large">
+              <input type="checkbox" id="enableToggle">
+              <span class="slider"></span>
+            </label>
+          </div>
+        </div>
+
+        <div id="connectionStatus" class="connection-card">
+          <div class="connection-card__icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+          </div>
+          <div class="connection-card__content">
+            <span class="connection-card__status">Checking...</span>
+            <span class="connection-card__detail"></span>
+          </div>
+        </div>
+
+        <div class="option-row">
+          <div class="option-row__info">
+            <span class="option-row__label">
+              Strict Mode
+              <button class="info-btn" id="strictModeInfo" title="How filtering works">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z"/></svg>
+              </button>
+            </span>
+            <span class="option-row__desc">Hide neutral videos, only show directly relevant</span>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" id="strictModeToggle">
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <div class="quick-stats">
+          <div class="quick-stat">
+            <span class="quick-stat__value" id="homeStatFocused">0</span>
+            <span class="quick-stat__label">Focused</span>
+          </div>
+          <div class="quick-stat">
+            <span class="quick-stat__value" id="homeStatBlocked">0</span>
+            <span class="quick-stat__label">Blocked</span>
+          </div>
+        </div>
+
+        <div id="activeProfileCard" class="active-profile-card" style="display: none;">
+          <span class="active-profile-card__label">Active Profile</span>
+          <span class="active-profile-card__name" id="activeProfileName">-</span>
+        </div>
       </div>
-    </header>
 
-    <div id="connectionStatus" class="status">
-      <span class="status-dot"></span>
-      <span class="status-text">Checking Ollama...</span>
-    </div>
+      <!-- FOCUS TAB -->
+      <div class="tab-content" data-tab="focus">
+        <section class="section">
+          <h2>Profiles</h2>
+          <div id="profilesList" class="profiles-list">
+            <!-- Profiles rendered by JS -->
+          </div>
+          <div id="starterTemplates" class="starter-templates" style="display: none;">
+            <p class="helper-text">Start with a template:</p>
+            <div class="templates-grid" id="templatesGrid">
+              <!-- Templates rendered by JS -->
+            </div>
+          </div>
+          <button id="newProfileBtn" class="btn btn-small">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+            New Profile
+          </button>
+        </section>
 
-    <section class="section">
-      <h2>Your Goals</h2>
-      <textarea id="goalsInput" placeholder="Be specific about what you're learning/doing AND what distracts you.&#10;&#10;Example: Learning TypeScript, React, system design. Working on a SaaS startup. Block: gaming, celebrity drama, political rants, mukbangs, prank videos, reaction content."></textarea>
-      <button id="saveGoals" class="btn primary">Save Goals</button>
-    </section>
-
-    <section class="section">
-      <h2>Quick Presets</h2>
-      <div class="presets">
-        <button class="preset-btn" data-preset="learning">Learning</button>
-        <button class="preset-btn" data-preset="coding">Coding</button>
-        <button class="preset-btn" data-preset="fitness">Fitness</button>
-        <button class="preset-btn" data-preset="music">Music</button>
+        <section class="section" id="goalsSection">
+          <div class="goals-header">
+            <h2 id="goalsTitle">Goals</h2>
+            <button id="deleteProfileBtn" class="btn btn-icon-only btn-danger" style="display: none;" title="Delete profile">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+            </button>
+          </div>
+          <textarea id="goalsInput" placeholder="Be specific about what you're learning AND what distracts you.&#10;&#10;Example: Learning TypeScript, React. Block: gaming, drama, pranks."></textarea>
+          <div class="goals-actions">
+            <div class="profile-name-wrapper">
+              <input type="text" id="profileNameInput" placeholder="Profile name" class="profile-name-input">
+              <button id="generateNameBtn" class="btn-icon" title="Generate name with AI">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M19 9l1.25-2.75L23 5l-2.75-1.25L19 1l-1.25 2.75L15 5l2.75 1.25L19 9zm-7.5.5L9 4 6.5 9.5 1 12l5.5 2.5L9 20l2.5-5.5L17 12l-5.5-2.5zM19 15l-1.25 2.75L15 19l2.75 1.25L19 23l1.25-2.75L23 19l-2.75-1.25L19 15z"/></svg>
+              </button>
+            </div>
+            <button id="saveGoals" class="btn primary">Save</button>
+          </div>
+        </section>
       </div>
-    </section>
 
-    <section class="section stats">
-      <h2>Today's Stats</h2>
-      <div class="stats-grid">
-        <div class="stat">
-          <span class="stat-value" id="todayBlocked">0</span>
-          <span class="stat-label">Blocked</span>
-        </div>
-        <div class="stat">
-          <span class="stat-value" id="todayTotal">0</span>
-          <span class="stat-label">Evaluated</span>
-        </div>
-        <div class="stat">
-          <span class="stat-value" id="totalCached">0</span>
-          <span class="stat-label">Cached</span>
-        </div>
-      </div>
-      <button id="clearCache" class="btn" style="margin-top: 12px; width: 100%;">Clear Cache &amp; Re-evaluate</button>
-    </section>
+      <!-- STATS TAB -->
+      <div class="tab-content" data-tab="stats">
+        <section class="section">
+          <h2>Today's Activity</h2>
+          <div class="stats-grid">
+            <div class="stat">
+              <div class="stat__icon stat__icon--focus">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+              </div>
+              <span class="stat-value" id="todayFocused">0</span>
+              <span class="stat-label">Focused</span>
+            </div>
+            <div class="stat">
+              <div class="stat__icon stat__icon--blocked">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zM4 12c0-4.42 3.58-8 8-8 1.85 0 3.55.63 4.9 1.69L5.69 16.9C4.63 15.55 4 13.85 4 12zm8 8c-1.85 0-3.55-.63-4.9-1.69L18.31 7.1C19.37 8.45 20 10.15 20 12c0 4.42-3.58 8-8 8z"/></svg>
+              </div>
+              <span class="stat-value" id="todayBlocked">0</span>
+              <span class="stat-label">Blocked</span>
+            </div>
+            <div class="stat">
+              <div class="stat__icon stat__icon--evaluated">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/></svg>
+              </div>
+              <span class="stat-value" id="todayTotal">0</span>
+              <span class="stat-label">Evaluated</span>
+            </div>
+            <div class="stat">
+              <div class="stat__icon stat__icon--cached">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M19 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 10h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"/></svg>
+              </div>
+              <span class="stat-value" id="totalCached">0</span>
+              <span class="stat-label">Cached</span>
+            </div>
+          </div>
+        </section>
 
-    <details class="section">
-      <summary>Advanced Settings</summary>
-      <div class="advanced-content">
-        <div class="field">
-          <label for="ollamaUrl">Ollama URL</label>
-          <input type="text" id="ollamaUrl" placeholder="http://localhost:11434">
-        </div>
-        <div class="field">
-          <label for="ollamaModel">Model</label>
-          <input type="text" id="ollamaModel" placeholder="llama3.2:3b">
-        </div>
-        <div class="field">
-          <label for="whitelistedChannels">Whitelisted Channels (one per line)</label>
-          <textarea id="whitelistedChannels" rows="3" placeholder="Channel names to always show..."></textarea>
-        </div>
-        <div class="field">
-          <label for="blacklistedChannels">Blacklisted Channels (one per line)</label>
-          <textarea id="blacklistedChannels" rows="3" placeholder="Channel names to always hide..."></textarea>
-        </div>
-        <button id="saveAdvanced" class="btn">Save Advanced Settings</button>
+        <button id="clearCache" class="btn btn-block">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
+          Clear Cache &amp; Re-evaluate
+        </button>
       </div>
-    </details>
+
+      <!-- SETTINGS TAB -->
+      <div class="tab-content" data-tab="settings">
+        <section class="section">
+          <h2>Ollama Connection</h2>
+          <div class="field">
+            <label for="ollamaUrl">Server URL</label>
+            <input type="text" id="ollamaUrl" placeholder="http://localhost:11434">
+          </div>
+          <div class="field">
+            <label for="ollamaModel">Model</label>
+            <input type="text" id="ollamaModel" placeholder="llama3.2:3b">
+          </div>
+        </section>
+
+        <section class="section">
+          <h2>Channel Rules</h2>
+          <div class="field">
+            <label for="whitelistedChannels">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+              Always Allow
+            </label>
+            <textarea id="whitelistedChannels" rows="2" placeholder="Channel names (one per line)"></textarea>
+          </div>
+          <div class="field">
+            <label for="blacklistedChannels">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+              Always Block
+            </label>
+            <textarea id="blacklistedChannels" rows="2" placeholder="Channel names (one per line)"></textarea>
+          </div>
+        </section>
+
+        <button id="saveAdvanced" class="btn primary btn-block">Save Settings</button>
+      </div>
+    </main>
+
+    <nav class="tab-bar">
+      <button class="tab-btn active" data-tab="home" title="Home">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+      </button>
+      <button class="tab-btn" data-tab="focus" title="Focus Profiles">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm8.94 3c-.46-4.17-3.77-7.48-7.94-7.94V1h-2v2.06C6.83 3.52 3.52 6.83 3.06 11H1v2h2.06c.46 4.17 3.77 7.48 7.94 7.94V23h2v-2.06c4.17-.46 7.48-3.77 7.94-7.94H23v-2h-2.06zM12 19c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z"/></svg>
+      </button>
+      <button class="tab-btn" data-tab="stats" title="Stats">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/></svg>
+      </button>
+      <button class="tab-btn" data-tab="settings" title="Settings">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M19.14 12.94c.04-.31.06-.63.06-.94 0-.31-.02-.63-.06-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+      </button>
+    </nav>
+
+    <!-- Toast notification -->
+    <div id="toast" class="toast"></div>
   </div>
 
   <script src="popup.js"></script>

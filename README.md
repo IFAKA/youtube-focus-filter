@@ -30,24 +30,35 @@ The `OLLAMA_ORIGINS="*"` is required for the extension to communicate with Ollam
 | 1 | Extension detects video thumbnails on YouTube |
 | 2 | Extracts title, channel, description |
 | 3 | Sends to local Ollama for evaluation |
-| 4 | LLM decides ALLOW or BLOCK based on your goals |
-| 5 | Blocked videos are hidden, allowed videos shown |
+| 4 | LLM classifies as FOCUS, ALLOW, or BLOCK |
+| 5 | Videos filtered based on classification |
 
 All processing happens locally. No data leaves your machine.
 
 ## Configuration
 
-Click the extension icon to open settings:
+Click the extension icon to open the popup with 4 tabs:
 
+**Home Tab**
 | Setting | Description |
 |---------|-------------|
-| Enable/Disable | Toggle filtering on/off |
+| Enable/Disable | Master toggle for filtering |
+| Strict Mode | Only show FOCUS videos, hide ALLOW |
+
+**Focus Tab**
+| Setting | Description |
+|---------|-------------|
+| Profiles | Save multiple goal configurations |
 | Goals | Describe what you want to focus on |
-| Presets | Quick templates for common use cases |
-| Whitelist | Channels to always show |
-| Blacklist | Channels to always hide |
+| Templates | Quick-start presets for common use cases |
+
+**Settings Tab**
+| Setting | Description |
+|---------|-------------|
 | Ollama URL | Default: `http://localhost:11434` |
 | Model | Default: `llama3.2:3b` |
+| Always Allow | Channels to whitelist |
+| Always Block | Channels to blacklist |
 
 ## Writing Good Goals
 
@@ -66,13 +77,22 @@ Block: gaming, celebrity drama, political rants, mukbangs, prank videos, reactio
 
 ## Filtering Logic
 
-The LLM follows these rules:
+The LLM classifies each video into three categories:
 
-- **BLOCK** if clearly entertainment, drama, gossip, clickbait
-- **BLOCK** if unrelated to your focus AND not educational
-- **ALLOW** if educational, informative, or skill-building
-- **ALLOW** if ambiguous — doesn't over-block
-- **ALLOW** tutorials, documentaries, lectures, how-tos
+| Classification | Meaning | Visibility |
+|---------------|---------|------------|
+| **FOCUS** | Directly relevant to your goals | Always shown (gold highlight) |
+| **ALLOW** | Not distracting, but not directly relevant | Shown (hidden in Strict Mode) |
+| **BLOCK** | Distracting content | Always hidden |
+
+**Rules the LLM follows:**
+- FOCUS if directly relevant to what you want to learn/do
+- ALLOW if educational, informative, or generally useful
+- ALLOW if ambiguous — doesn't over-block
+- BLOCK if clearly entertainment, drama, gossip, clickbait
+- BLOCK if unrelated to focus AND not educational
+
+**Strict Mode:** Enable to hide ALLOW videos and only show FOCUS content.
 
 ## Where It Filters
 

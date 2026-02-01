@@ -27,8 +27,9 @@
   let debounceTimer = null;
   let isConnected = false;
   let isEnabled = true;
+  let isStrictMode = false;
   let connectionCheckTimer = null;
-  let sessionStats = { evaluated: 0, blocked: 0 };
+  let sessionStats = { evaluated: 0, blocked: 0, focused: 0 };
 
   // ============================================
   // MESSAGE LISTENER
@@ -39,13 +40,14 @@
       // Clear processed set to re-evaluate all videos
       processedVideos.clear();
       pendingVideos.clear();
-      sessionStats = { evaluated: 0, blocked: 0 };
+      sessionStats = { evaluated: 0, blocked: 0, focused: 0 };
       window._ytffDebuggedElement = false;
 
       // Reset all video statuses
       document.querySelectorAll('[data-ytff-status]').forEach(el => {
         el.removeAttribute('data-ytff-status');
         el.querySelector('.ytff-loading-badge')?.remove();
+        el.querySelector('.ytff-focus-badge')?.remove();
       });
 
       // Re-check connection and settings before re-processing
@@ -58,6 +60,10 @@
           console.log('[YouTube Focus Filter] Cannot re-process: enabled=' + isEnabled + ', connected=' + isConnected);
         }
       })();
+      sendResponse({ success: true });
+    } else if (message.type === 'UPDATE_STRICT_MODE') {
+      isStrictMode = message.strictMode;
+      updateStrictModeClass();
       sendResponse({ success: true });
     }
     return true;
@@ -97,12 +103,23 @@
     try {
       const response = await chrome.runtime.sendMessage({ type: 'GET_SETTINGS' });
       isEnabled = response.settings?.enabled ?? true;
+      isStrictMode = response.settings?.strictMode ?? false;
 
       if (!isEnabled) {
         showDisabledIndicator();
       }
+
+      updateStrictModeClass();
     } catch (error) {
       console.error('[YouTube Focus Filter] Failed to load settings:', error);
+    }
+  }
+
+  function updateStrictModeClass() {
+    if (isStrictMode) {
+      document.documentElement.classList.add('ytff-strict-mode');
+    } else {
+      document.documentElement.classList.remove('ytff-strict-mode');
     }
   }
 
@@ -121,23 +138,25 @@
         processVideos();
       } else if (!isConnected && wasConnected) {
         // Just disconnected - show error with specific reason
-        const errorMsg = response.error || 'Ollama disconnected';
-        showBanner('error', errorMsg + '. Check extension settings.', 'Retry', checkConnection);
+        showBanner('error', 'Connection lost', 'Retry', checkConnection, 0, 'Check extension settings');
       } else if (!isConnected && !wasConnected) {
         // Still disconnected on init - show specific error
-        let errorMsg = 'Ollama not running. Start with: ollama serve';
+        let errorMsg = 'Ollama not running';
+        let detail = 'Run: ollama serve';
         if (response.error && response.error.includes('not found')) {
-          errorMsg = response.error + '. Pull it with: ollama pull <model>';
+          errorMsg = 'Model not found';
+          detail = 'Run: ollama pull <model>';
         } else if (response.error) {
           errorMsg = response.error;
+          detail = '';
         }
-        showBanner('error', errorMsg, 'Retry', checkConnection);
+        showBanner('error', errorMsg, 'Retry', checkConnection, 0, detail);
       }
 
       return isConnected;
     } catch (error) {
       isConnected = false;
-      showBanner('error', 'Extension error. Try reloading the page.', 'Reload', () => location.reload());
+      showBanner('error', 'Extension error', 'Reload', () => location.reload(), 0, 'Try reloading the page');
       return false;
     }
   }
@@ -145,7 +164,7 @@
   // ============================================
   // BANNER UI
   // ============================================
-  function showBanner(type, message, actionText, actionCallback, autoHide = 0) {
+  function showBanner(type, message, actionText, actionCallback, autoHide = 0, detail = '') {
     removeBanner();
 
     const banner = document.createElement('div');
@@ -153,16 +172,21 @@
     banner.id = 'ytff-banner';
 
     const icons = {
-      error: '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>',
-      warning: '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-8h2v8z"/></svg>',
-      success: '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>'
+      error: '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>',
+      warning: '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-8h2v8z"/></svg>',
+      success: '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>'
     };
 
     banner.innerHTML = `
       <span class="ytff-banner__icon">${icons[type] || ''}</span>
-      <span class="ytff-banner__message">${message}</span>
+      <div class="ytff-banner__content">
+        <span class="ytff-banner__message">${message}</span>
+        ${detail ? `<span class="ytff-banner__detail">${detail}</span>` : ''}
+      </div>
       ${actionText ? `<button class="ytff-banner__action">${actionText}</button>` : ''}
-      <button class="ytff-banner__close">\u00D7</button>
+      <button class="ytff-banner__close">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+      </button>
     `;
 
     if (actionCallback) {
@@ -201,6 +225,11 @@
     }
 
     badge.innerHTML = `
+      <div class="ytff-stats-badge__item">
+        <span class="ytff-stats-badge__icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg></span>
+        <span class="ytff-stats-badge__count">${sessionStats.focused}</span>
+        <span>focused</span>
+      </div>
       <div class="ytff-stats-badge__item">
         <span class="ytff-stats-badge__icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/></svg></span>
         <span class="ytff-stats-badge__count">${sessionStats.blocked}</span>
@@ -260,7 +289,7 @@
         console.log('[YouTube Focus Filter] Navigation detected');
         processedVideos.clear();
         pendingVideos.clear();
-        sessionStats = { evaluated: 0, blocked: 0 };
+        sessionStats = { evaluated: 0, blocked: 0, focused: 0 };
 
         setTimeout(() => {
           if (isEnabled && isConnected) {
@@ -505,7 +534,8 @@
   function addLoadingBadge(element) {
     if (element.querySelector('.ytff-loading-badge')) return;
 
-    const thumbnail = element.querySelector('ytd-thumbnail, .ytd-thumbnail');
+    // Try multiple selectors for different YouTube layouts
+    const thumbnail = element.querySelector('ytd-thumbnail, .ytd-thumbnail, yt-thumbnail-view-model, yt-collection-thumbnail-view-model');
     if (!thumbnail) return;
 
     thumbnail.style.position = 'relative';
@@ -522,6 +552,22 @@
 
   function removeLoadingBadge(element) {
     element.querySelector('.ytff-loading-badge')?.remove();
+  }
+
+  // ============================================
+  // FOCUS BADGE
+  // ============================================
+  function addFocusBadge(element) {
+    if (element.querySelector('.ytff-focus-badge')) return;
+    // Try multiple selectors for different YouTube layouts
+    const thumbnail = element.querySelector('ytd-thumbnail, .ytd-thumbnail, yt-thumbnail-view-model, yt-collection-thumbnail-view-model');
+    if (!thumbnail) return;
+    thumbnail.style.position = 'relative';
+
+    const badge = document.createElement('div');
+    badge.className = 'ytff-focus-badge';
+    badge.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>FOCUS`;
+    thumbnail.appendChild(badge);
   }
 
   // ============================================
@@ -546,6 +592,11 @@
         setVideoStatus(video.element, 'blocked');
         sessionStats.blocked++;
         console.log(`[YouTube Focus Filter] Blocked: "${video.title}" (${decision.source})`);
+      } else if (decision.decision === 'FOCUS') {
+        setVideoStatus(video.element, 'focus');
+        addFocusBadge(video.element);
+        sessionStats.focused++;
+        console.log(`[YouTube Focus Filter] Focus: "${video.title}" (${decision.source})`);
       } else {
         setVideoStatus(video.element, 'allowed');
       }

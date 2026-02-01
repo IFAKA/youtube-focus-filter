@@ -4,12 +4,23 @@ import { getCachedDecision, setCachedDecision, clearExpiredCache, getStats, clea
 // Default settings
 const DEFAULT_SETTINGS = {
   enabled: true,
-  goals: 'I want to learn programming, improve my skills, and stay productive. Block entertainment, drama, gossip, and time-wasting content.',
+  strictMode: false,
+  goals: '',
+  activeProfileId: null,
+  profiles: [],
   ollamaUrl: 'http://localhost:11434',
   ollamaModel: 'llama3.2:3b',
   whitelistedChannels: [],
   blacklistedChannels: []
 };
+
+// Starter templates (shown when no profiles exist)
+const STARTER_TEMPLATES = [
+  { name: 'Learning', goals: 'Learning and self-improvement. Allow: educational videos, documentaries, tutorials, lectures, skill-building, science, history. Block: drama, gossip, reaction videos, pranks, clickbait, celebrity news, political rants.' },
+  { name: 'Coding', goals: 'Software development and tech. Allow: programming tutorials, system design, tech talks, CS concepts, developer tools, startup advice. Block: gaming, vlogs, drama, unboxings, entertainment, reaction content.' },
+  { name: 'Fitness', goals: 'Health and fitness. Allow: workouts, exercise tutorials, nutrition science, sports technique, physical therapy, mobility. Block: mukbangs, junk food, sedentary entertainment, drama, gossip.' },
+  { name: 'Music', goals: 'Music learning and production. Allow: music theory, instrument tutorials, production techniques, song analysis, ear training. Block: drama, gossip, celebrity news, reaction videos, pranks.' }
+];
 
 let settings = { ...DEFAULT_SETTINGS };
 let ollamaClient = null;
@@ -44,7 +55,7 @@ async function handleMessage(message) {
       return evaluateVideos(message.videos);
 
     case 'GET_SETTINGS':
-      return { settings };
+      return { settings, starterTemplates: STARTER_TEMPLATES };
 
     case 'UPDATE_SETTINGS':
       settings = { ...settings, ...message.settings };
@@ -81,8 +92,40 @@ async function handleMessage(message) {
       }
       return { success: true, tabsNotified: tabs.length };
 
+    case 'STRICT_MODE_CHANGED':
+      // Notify all YouTube tabs to update strict mode display
+      const ytTabs = await chrome.tabs.query({ url: 'https://www.youtube.com/*' });
+      for (const tab of ytTabs) {
+        chrome.tabs.sendMessage(tab.id, { type: 'UPDATE_STRICT_MODE', strictMode: settings.strictMode }).catch(() => {});
+      }
+      return { success: true };
+
+    case 'GENERATE_PROFILE_NAME':
+      return generateProfileName(message.goals);
+
     default:
       return { error: 'Unknown message type' };
+  }
+}
+
+async function generateProfileName(goals) {
+  if (!goals || !ollamaClient) {
+    return { error: 'No goals provided' };
+  }
+
+  try {
+    const prompt = `Generate a short profile name (1-3 words, max 20 characters) for this focus profile:
+
+"${goals.slice(0, 500)}"
+
+Reply with ONLY the profile name, nothing else. Examples: "Web Dev", "Fitness", "Music Production", "Data Science"`;
+
+    const response = await ollamaClient.generate(prompt, { maxTokens: 20 });
+    const name = response.trim().replace(/["']/g, '').slice(0, 25);
+    return { name };
+  } catch (error) {
+    console.error('Failed to generate profile name:', error);
+    return { error: error.message };
   }
 }
 
