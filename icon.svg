@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FF4757"/>
+      <stop offset="100%" style="stop-color:#C0392B"/>
+    </linearGradient>
+  </defs>
+  <rect width="128" height="128" rx="24" fill="url(#bg)"/>
+  <!-- YouTube-style rounded rectangle -->
+  <rect x="22" y="38" width="84" height="52" rx="12" fill="white" opacity="0.9"/>
+  <!-- Play triangle -->
+  <polygon points="56,50 56,78 78,64" fill="#FF4757"/>
+  <!-- Filter funnel overlay at bottom-right -->
+  <g transform="translate(80, 68)">
+    <circle cx="14" cy="14" r="18" fill="#2D3436"/>
+    <path d="M4 6 L24 6 L16 16 L16 24 L12 22 L12 16 Z" fill="white"/>
+  </g>
+</svg>
